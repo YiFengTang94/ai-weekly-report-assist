@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(cp /tmp/ai-weekly-report-assist/.gitignore /Users/tzhome/Documents/ai_weekly_report_assist/)",
+      "Bash(cp /tmp/ai-weekly-report-assist/eslint.config.mjs /Users/tzhome/Documents/ai_weekly_report_assist/)",
+      "Bash(cp /tmp/ai-weekly-report-assist/next-env.d.ts /Users/tzhome/Documents/ai_weekly_report_assist/)",
+      "Bash(cp /tmp/ai-weekly-report-assist/next.config.ts /Users/tzhome/Documents/ai_weekly_report_assist/)",
+      "Bash(cp /tmp/ai-weekly-report-assist/package.json /Users/tzhome/Documents/ai_weekly_report_assist/)",
+      "Bash(mkdir -p '/Users/tzhome/Documents/ai_weekly_report_assist/app/reports/[id]')",
+      "Bash(mkdir -p /Users/tzhome/Documents/ai_weekly_report_assist/app/api/report/generate)",
+      "Bash(mkdir -p /Users/tzhome/Documents/ai_weekly_report_assist/app/api/report/list)",
+      "Bash(mkdir -p '/Users/tzhome/Documents/ai_weekly_report_assist/app/api/report/[id]')",
+      "Bash(mkdir -p /Users/tzhome/Documents/ai_weekly_report_assist/app/api/cron)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
