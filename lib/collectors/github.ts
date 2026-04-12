@@ -1,6 +1,11 @@
 import { Octokit } from '@octokit/rest';
 import type { GitHubCommit, GitHubData, GitHubIssue, GitHubPR } from '@/lib/types';
 
+type SearchIssueItem = Awaited<
+  ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>
+>['data']['items'][number];
+type PRStatus = GitHubPR['status'];
+
 export async function collectGitHubData(
   weekStart: string,
   weekEnd: string,
@@ -57,30 +62,27 @@ async function fetchPRs(
   weekStart: string,
   weekEnd: string
 ): Promise<GitHubPR[]> {
-  const q = `author:${username} created:${weekStart}..${weekEnd} type:pr`;
-  const { data } = await octokit.rest.search.issuesAndPullRequests({
-    q,
-    sort: 'created',
-    order: 'desc',
-    per_page: 100,
-  });
+  const queries = [
+    {
+      q: `author:${username} merged:${weekStart}..${weekEnd} type:pr`,
+      status: 'merged' as const,
+    },
+    {
+      q: `author:${username} closed:${weekStart}..${weekEnd} type:pr`,
+      status: 'closed' as const,
+    },
+    {
+      q: `author:${username} updated:${weekStart}..${weekEnd} state:open type:pr`,
+    },
+  ];
 
-  return data.items.map((item) => {
-    const repoUrl = item.repository_url ?? '';
-    const repo = repoUrl.replace('https://api.github.com/repos/', '');
-    let status: 'merged' | 'open' | 'closed' = 'open';
-    if (item.pull_request?.merged_at) {
-      status = 'merged';
-    } else if (item.state === 'closed') {
-      status = 'closed';
-    }
-    return {
-      title: item.title,
-      status,
-      repo,
-      url: item.html_url ?? '',
-    };
-  });
+  const results = await Promise.all(
+    queries.map(async ({ q, status }) =>
+      (await searchIssues(octokit, q)).map((item) => mapPR(item, status))
+    )
+  );
+  const prs = results.flat();
+  return dedupeByUrl(prs, prStatusRank);
 }
 
 async function fetchIssues(
@@ -89,22 +91,78 @@ async function fetchIssues(
   weekStart: string,
   weekEnd: string
 ): Promise<GitHubIssue[]> {
-  const q = `author:${username} created:${weekStart}..${weekEnd} type:issue`;
+  const queries = [
+    `author:${username} closed:${weekStart}..${weekEnd} type:issue`,
+    `author:${username} updated:${weekStart}..${weekEnd} state:open type:issue`,
+  ];
+
+  const results = await Promise.all(queries.map((q) => searchIssues(octokit, q)));
+  const issues = results.flat().map(mapIssue);
+  return dedupeByUrl(issues, issueStatusRank);
+}
+
+async function searchIssues(
+  octokit: Octokit,
+  q: string
+): Promise<SearchIssueItem[]> {
   const { data } = await octokit.rest.search.issuesAndPullRequests({
     q,
-    sort: 'created',
+    sort: 'updated',
     order: 'desc',
     per_page: 100,
   });
+  return data.items;
+}
 
-  return data.items.map((item) => {
-    const repoUrl = item.repository_url ?? '';
-    const repo = repoUrl.replace('https://api.github.com/repos/', '');
-    return {
-      title: item.title,
-      status: item.state === 'closed' ? 'closed' as const : 'open' as const,
-      repo,
-      url: item.html_url ?? '',
-    };
-  });
+function mapPR(item: SearchIssueItem, status?: PRStatus): GitHubPR {
+  return {
+    title: item.title,
+    status: status ?? getPRStatus(item),
+    repo: getRepoName(item),
+    url: item.html_url ?? '',
+  };
+}
+
+function mapIssue(item: SearchIssueItem): GitHubIssue {
+  return {
+    title: item.title,
+    status: item.state === 'closed' ? 'closed' : 'open',
+    repo: getRepoName(item),
+    url: item.html_url ?? '',
+  };
+}
+
+function getPRStatus(item: SearchIssueItem): GitHubPR['status'] {
+  if (item.pull_request?.merged_at) {
+    return 'merged';
+  }
+  return item.state === 'closed' ? 'closed' : 'open';
+}
+
+function getRepoName(item: SearchIssueItem): string {
+  const repoUrl = item.repository_url ?? '';
+  return repoUrl.replace('https://api.github.com/repos/', '');
+}
+
+function dedupeByUrl<T extends { repo: string; title: string; url: string }>(
+  items: T[],
+  rank: (item: T) => number
+): T[] {
+  const byUrl = new Map<string, T>();
+  for (const item of items) {
+    const key = item.url || `${item.repo}:${item.title}`;
+    const existing = byUrl.get(key);
+    if (!existing || rank(item) > rank(existing)) {
+      byUrl.set(key, item);
+    }
+  }
+  return Array.from(byUrl.values());
+}
+
+function prStatusRank(pr: GitHubPR): number {
+  return { merged: 3, closed: 2, open: 1 }[pr.status];
+}
+
+function issueStatusRank(issue: GitHubIssue): number {
+  return { closed: 2, open: 1 }[issue.status];
 }

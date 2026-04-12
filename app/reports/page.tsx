@@ -1,22 +1,11 @@
 import Link from 'next/link';
 import { ReportCard } from '@/components/report-card';
-import type { WeeklyReport } from '@/lib/types';
+import { listReports } from '@/lib/publishers/file-reader';
 
-async function getReports(): Promise<WeeklyReport[]> {
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-  try {
-    const res = await fetch(`${baseUrl}/api/report/list`, {
-      cache: 'no-store',
-    });
-    const data = await res.json();
-    return data.reports ?? [];
-  } catch {
-    return [];
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export default async function ReportsPage() {
-  const reports = await getReports();
+  const reports = await listReports();
 
   return (
     <main className="container mx-auto p-8">

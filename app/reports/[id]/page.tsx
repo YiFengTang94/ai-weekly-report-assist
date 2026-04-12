@@ -1,20 +1,8 @@
 import Link from 'next/link';
 import { ReportDetail } from '@/components/report-detail';
-import type { WeeklyReport } from '@/lib/types';
+import { getReportById } from '@/lib/publishers/file-reader';
 
-async function getReport(id: string): Promise<WeeklyReport | null> {
-  const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-  try {
-    const res = await fetch(`${baseUrl}/api/report/${id}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.report ?? null;
-  } catch {
-    return null;
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export default async function ReportDetailPage({
   params,
@@ -22,7 +10,7 @@ export default async function ReportDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const report = await getReport(id);
+  const report = await getReportById(id);
 
   return (
     <main className="container mx-auto p-8">

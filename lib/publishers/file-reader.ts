@@ -3,6 +3,8 @@ import path from 'path';
 import { config } from '@/lib/config';
 import type { WeeklyReport } from '@/lib/types';
 
+const REPORT_ID_PATTERN = /^weekly-report-\d{4}-\d{2}-\d{2}$/;
+
 export async function listReports(): Promise<WeeklyReport[]> {
   const dir = path.resolve(config.report.outputDir);
 
@@ -28,6 +30,9 @@ export async function getReportById(
   id: string
 ): Promise<WeeklyReport | null> {
   const dir = path.resolve(config.report.outputDir);
+  if (!REPORT_ID_PATTERN.test(id)) {
+    return null;
+  }
 
   try {
     return await readReportFile(dir, `${id}.md`);
@@ -40,7 +45,10 @@ async function readReportFile(
   dir: string,
   filename: string
 ): Promise<WeeklyReport | null> {
-  const filePath = path.join(dir, filename);
+  const filePath = path.resolve(dir, filename);
+  if (!isPathInsideDirectory(filePath, dir)) {
+    return null;
+  }
 
   try {
     const content = await fs.readFile(filePath, 'utf-8');
@@ -71,4 +79,13 @@ async function readReportFile(
   } catch {
     return null;
   }
+}
+
+function isPathInsideDirectory(filePath: string, dir: string): boolean {
+  const relative = path.relative(dir, filePath);
+  return (
+    Boolean(relative) &&
+    !relative.startsWith('..') &&
+    !path.isAbsolute(relative)
+  );
 }
