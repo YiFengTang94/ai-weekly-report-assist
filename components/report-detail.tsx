@@ -7,7 +7,7 @@ interface ReportDetailProps {
 
 export function ReportDetail({ report }: ReportDetailProps) {
   return (
-    <article className="prose max-w-none">
+    <article className="prose prose-headings:mt-6 prose-headings:mb-4 prose-p:my-3 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg max-w-none dark:prose-invert">
       <ReactMarkdown>{report.content}</ReactMarkdown>
     </article>
   );

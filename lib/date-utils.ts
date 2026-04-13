@@ -1,19 +1,29 @@
 export function getWeekRange(): { weekStart: string; weekEnd: string } {
   const now = new Date();
   const day = now.getDay();
-  // Calculate Monday: if Sunday (0), go back 6 days; otherwise go back (day - 1) days
-  const diffToMonday = day === 0 ? 6 : day - 1;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - diffToMonday);
-  monday.setHours(0, 0, 0, 0);
+  // Calculate Sunday: if Sunday (0), use today; otherwise go back to Sunday
+  const diffToSunday = day === 0 ? 0 : day;
+  const sunday = new Date(now);
+  sunday.setDate(now.getDate() - diffToSunday);
+  sunday.setHours(0, 0, 0, 0);
 
-  const friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
-  friday.setHours(23, 59, 59, 999);
+  // For GitHub API queries, extend the range to include partial days due to timezone differences
+  // Add 1 day before Sunday to catch commits from UTC perspective
+  const weekStartForAPI = new Date(sunday);
+  weekStartForAPI.setDate(sunday.getDate() - 1);
+
+  // Saturday of the same week
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+  saturday.setHours(23, 59, 59, 999);
+
+  // Add 1 day after Saturday
+  const weekEndForAPI = new Date(saturday);
+  weekEndForAPI.setDate(saturday.getDate() + 1);
 
   return {
-    weekStart: formatDate(monday),
-    weekEnd: formatDate(friday),
+    weekStart: formatDate(weekStartForAPI),
+    weekEnd: formatDate(weekEndForAPI),
   };
 }
 
