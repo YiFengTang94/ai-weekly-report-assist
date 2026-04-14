@@ -6,5 +6,7 @@ export async function collectLarkCalendarData(
 ): Promise<LarkCalendarData> {
   return {
     meetings: [],
+    minutes: [],
+    wikiDocs: [],
   };
 }

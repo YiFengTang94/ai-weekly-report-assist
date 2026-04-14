@@ -29,10 +29,27 @@ export interface LarkMeeting {
   title: string;
   startTime: string;
   endTime: string;
+  eventId?: string;
+}
+
+export interface LarkMinutes {
+  meetingTitle: string;
+  summary?: string;
+  todos?: string[];
+  duration?: number;
+}
+
+export interface LarkWikiDoc {
+  title: string;
+  content: string;
+  updatedAt: string;
+  url?: string;
 }
 
 export interface LarkCalendarData {
   meetings: LarkMeeting[];
+  minutes: LarkMinutes[];
+  wikiDocs: LarkWikiDoc[];
 }
 
 export interface WeeklyReportData {

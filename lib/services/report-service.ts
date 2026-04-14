@@ -28,7 +28,7 @@ export async function generateWeeklyReport(
     calendar:
       calendar.status === 'fulfilled'
         ? calendar.value
-        : { meetings: [] },
+        : { meetings: [], minutes: [], wikiDocs: [] },
   };
 
   // Summarize with ZHIPU AI
