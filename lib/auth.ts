@@ -16,6 +16,8 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string;
     larkAccessToken?: string;
+    larkExpiresAt?: number;
+    larkAuthError?: 'expired' | 'refresh_failed';
     githubUser?: ConnectedIdentity;
     larkUser?: ConnectedIdentity;
   }
@@ -36,6 +38,7 @@ interface AppJWT extends JWT {
   larkAccessToken?: string;
   larkRefreshToken?: string;
   larkExpiresAt?: number;
+  larkAuthError?: 'expired' | 'refresh_failed';
 }
 
 type GitHubProfile = {
@@ -112,6 +115,7 @@ function mergeExistingProviderState(token: AppJWT, existing: AppJWT | null) {
   token.larkAccessToken ??= existing.larkAccessToken;
   token.larkRefreshToken ??= existing.larkRefreshToken;
   token.larkExpiresAt ??= existing.larkExpiresAt;
+  token.larkAuthError ??= existing.larkAuthError;
   token.larkUser ??= existing.larkUser;
 }
 
@@ -137,6 +141,7 @@ const LARK_SCOPES = [
   'vc:meeting.search:read',
   'vc:note:read',
   'minutes:minutes:readonly',
+  'minutes:minutes.transcript:export',
   'minutes:minutes.artifacts:read',
   'wiki:node:read',
   'docx:document:readonly',
@@ -236,6 +241,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === 'lark') {
         t.larkAccessToken = account.access_token ?? undefined;
         t.larkRefreshToken = account.refresh_token ?? undefined;
+        t.larkAuthError = undefined;
         const larkProfileIdentity = mapLarkIdentity(profile as LarkUserInfo);
         t.larkUser = larkProfileIdentity;
         const expiresIn = (account.expires_in as number | undefined) ?? 7200;
@@ -256,12 +262,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           t.larkAccessToken = refreshed.access_token;
           t.larkRefreshToken = refreshed.refresh_token ?? t.larkRefreshToken;
           t.larkExpiresAt = Date.now() + refreshedExpiresIn * 1000;
+          t.larkAuthError = undefined;
         } catch {
           console.warn('飞书 token 刷新失败，用户需要重新授权');
           t.larkAccessToken = undefined;
           t.larkRefreshToken = undefined;
           t.larkExpiresAt = undefined;
+          t.larkAuthError = 'refresh_failed';
         }
+      }
+      if (
+        t.larkAccessToken &&
+        t.larkExpiresAt &&
+        Date.now() >= t.larkExpiresAt
+      ) {
+        t.larkAccessToken = undefined;
+        t.larkAuthError = 'expired';
       }
       if (
         t.larkAccessToken &&
@@ -284,7 +300,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       const t = token as AppJWT;
       session.accessToken = t.accessToken as string;
-      session.larkAccessToken = t.larkAccessToken as string;
+      const larkTokenIsExpired =
+        Boolean(t.larkExpiresAt) && Date.now() >= Number(t.larkExpiresAt);
+      session.larkAuthError =
+        t.larkAuthError ?? (larkTokenIsExpired ? 'expired' : undefined);
+      session.larkExpiresAt = t.larkExpiresAt;
+      session.larkAccessToken =
+        !session.larkAuthError && !larkTokenIsExpired
+          ? (t.larkAccessToken as string)
+          : undefined;
       session.githubUser = t.githubUser;
       session.larkUser = t.larkUser;
       if (session.user) {

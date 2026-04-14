@@ -23,7 +23,8 @@ export async function collectLarkCalendarEvents(
   // 获取用户主日历 ID
   const primaryCal = await larkFetch<{ calendars?: Array<{ calendar?: { calendar_id: string } }> }>(
     '/calendar/v4/calendars/primary',
-    accessToken
+    accessToken,
+    { method: 'POST' }
   );
   const calendarId = primaryCal.calendars?.[0]?.calendar?.calendar_id;
   if (!calendarId) {

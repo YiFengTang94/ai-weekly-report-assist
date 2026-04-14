@@ -457,6 +457,37 @@ a:focus-visible {
     color: var(--accent);
   }
 
+  .source-status-list {
+    display: grid;
+    flex-basis: 100%;
+    gap: 6px;
+    color: var(--muted-foreground);
+    font-family: var(--font-cyber-body);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+  }
+
+  .source-status-ok,
+  .source-status-warning {
+    margin: 0;
+  }
+
+  .source-status-ok {
+    color: var(--accent);
+    text-shadow: 0 0 10px rgb(0 255 136 / 48%);
+  }
+
+  .source-status-warning {
+    color: var(--destructive);
+    text-shadow: 0 0 10px rgb(255 51 102 / 48%);
+  }
+
+  .source-status-warning::before {
+    content: "> ";
+  }
+
   .auth-chip {
     display: flex;
     flex-wrap: wrap;
