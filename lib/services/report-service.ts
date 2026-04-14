@@ -10,17 +10,17 @@ export async function generateWeeklyReport(
   token: string,
   username: string
 ): Promise<WeeklyReport> {
-  const { weekStart, weekEnd } = getWeekRange();
+  const weekRange = getWeekRange();
 
   // Collect data in parallel — individual failures don't block the pipeline
   const [github, calendar] = await Promise.allSettled([
-    collectGitHubData(weekStart, weekEnd, token, username),
-    collectLarkCalendarData(weekStart, weekEnd),
+    collectGitHubData(weekRange, token, username),
+    collectLarkCalendarData(weekRange.weekStart, weekRange.weekEnd),
   ]);
 
   const data: WeeklyReportData = {
-    weekStart,
-    weekEnd,
+    weekStart: weekRange.weekStart,
+    weekEnd: weekRange.weekEnd,
     github:
       github.status === 'fulfilled'
         ? github.value
