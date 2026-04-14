@@ -8,6 +8,7 @@ export const config = {
     appSecret: process.env.LARK_APP_SECRET ?? '',
     botWebhook: process.env.LARK_BOT_WEBHOOK ?? '',
     wikiSpaceId: process.env.LARK_WIKI_SPACE_ID ?? '',
+    minuteTokens: process.env.LARK_MINUTE_TOKENS ?? '',
   },
   zhipu: {
     apiKey: process.env.ZHIPU_API_KEY ?? '',

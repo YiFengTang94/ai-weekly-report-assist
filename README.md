@@ -156,6 +156,7 @@ vercel
 | `GITHUB_TOKEN` | GitHub PAT（Cron 使用） | ❌ |
 | `GITHUB_USERNAME` | GitHub 用户名（Cron 使用） | ❌ |
 | `LARK_WIKI_SPACE_ID` | 飞书知识库 Space ID（Wiki 采集） | ❌ |
+| `LARK_MINUTE_TOKENS` | 飞书妙记 token，多个用逗号分隔（如 `token1,token2`） | ❌ |
 | `LARK_USER_ACCESS_TOKEN` | 飞书用户访问令牌（Cron 无会话时兜底） | ❌ |
 | `CRON_SECRET` | Cron 访问密钥 | ❌ |
 | `REPORT_OUTPUT_DIR` | 周报保存目录 | 默认: `./reports` |

@@ -72,6 +72,22 @@ function buildPrompt(data: WeeklyReportData): string {
   lines.push(`时间范围: ${data.weekStart} ~ ${data.weekEnd}`);
   lines.push('');
 
+  if (data.sourceStatuses?.length) {
+    lines.push('=== 数据源状态 ===');
+    for (const status of data.sourceStatuses) {
+      lines.push(`- ${status.message}`);
+    }
+    lines.push('');
+  }
+
+  if (data.warnings?.length) {
+    lines.push('=== 数据源告警 ===');
+    for (const warning of data.warnings) {
+      lines.push(`- ${warning.message}`);
+    }
+    lines.push('');
+  }
+
   // Commits
   lines.push(`=== Commits (${data.github.commits.length}) ===`);
   if (data.github.commits.length === 0) {

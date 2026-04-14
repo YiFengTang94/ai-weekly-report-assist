@@ -1,14 +1,62 @@
 import { NextResponse } from 'next/server';
 import { resolveGitHubToken } from '@/lib/github-token';
-import { resolveLarkToken } from '@/lib/lark-token';
+import { resolveLarkTokenState } from '@/lib/lark-token';
 import { generateWeeklyReport } from '@/lib/services/report-service';
+import type { ReportWarning } from '@/lib/types';
+
+function getLarkWarnings(reason: string | undefined): ReportWarning[] {
+  if (reason === 'expired' || reason === 'refresh_failed') {
+    return [
+      {
+        source: 'lark-calendar',
+        code: 'lark-token-expired',
+        message: '飞书日历采集失败：飞书授权已过期，请重新连接飞书。',
+        reconnectRequired: true,
+      },
+      {
+        source: 'lark-minutes',
+        code: 'lark-token-expired',
+        message: '飞书妙记采集失败：飞书授权已过期，请重新连接飞书。',
+        reconnectRequired: true,
+      },
+      {
+        source: 'lark-wiki',
+        code: 'lark-token-expired',
+        message: '飞书 Wiki 采集失败：飞书授权已过期，请重新连接飞书。',
+        reconnectRequired: true,
+      },
+    ];
+  }
+
+  if (reason === 'not_connected') {
+    return [
+      {
+        source: 'lark-calendar',
+        code: 'lark-not-connected',
+        message: '飞书未连接，已跳过飞书数据采集。',
+      },
+    ];
+  }
+
+  return [];
+}
 
 export async function POST() {
   try {
     const { token, username } = await resolveGitHubToken();
-    const larkToken = await resolveLarkToken();
-    const report = await generateWeeklyReport(token, username, larkToken);
-    return NextResponse.json({ report });
+    const larkTokenState = await resolveLarkTokenState();
+    const larkWarnings = getLarkWarnings(larkTokenState.reason);
+    const report = await generateWeeklyReport(
+      token,
+      username,
+      larkTokenState.token,
+      larkWarnings
+    );
+    return NextResponse.json({
+      report,
+      warnings: report.warnings ?? [],
+      sourceStatuses: report.sourceStatuses ?? [],
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : '周报生成失败';

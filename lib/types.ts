@@ -37,6 +37,8 @@ export interface LarkMinutes {
   summary?: string;
   todos?: string[];
   duration?: number;
+  url?: string;
+  source?: 'vc' | 'minutes';
 }
 
 export interface LarkWikiDoc {
@@ -52,11 +54,41 @@ export interface LarkCalendarData {
   wikiDocs: LarkWikiDoc[];
 }
 
+export type ReportDataSource =
+  | 'github'
+  | 'lark-calendar'
+  | 'lark-minutes'
+  | 'lark-wiki';
+
+export type ReportWarningCode =
+  | 'lark-token-expired'
+  | 'lark-not-connected'
+  | 'source-collection-failed';
+
+export interface ReportWarning {
+  source: ReportDataSource;
+  code: ReportWarningCode;
+  message: string;
+  reconnectRequired?: boolean;
+}
+
+export type ReportSourceStatusState = 'collected' | 'failed' | 'skipped';
+
+export interface ReportSourceStatus {
+  source: ReportDataSource;
+  label: string;
+  status: ReportSourceStatusState;
+  count?: number;
+  message: string;
+}
+
 export interface WeeklyReportData {
   weekStart: string;
   weekEnd: string;
   github: GitHubData;
   calendar: LarkCalendarData;
+  warnings?: ReportWarning[];
+  sourceStatuses?: ReportSourceStatus[];
 }
 
 export interface WeeklyReport {
@@ -66,4 +98,6 @@ export interface WeeklyReport {
   content: string;
   createdAt: string;
   filePath?: string;
+  warnings?: ReportWarning[];
+  sourceStatuses?: ReportSourceStatus[];
 }
