@@ -1,5 +1,5 @@
 import { larkFetch } from '@/lib/lark/client';
-import type { LarkCalendarData, LarkMeeting } from '@/lib/types';
+import type { LarkMeeting } from '@/lib/types';
 
 interface CalendarEvent {
   event_id: string;
@@ -74,12 +74,4 @@ function formatTimestamp(ts?: string): string {
   const ms = Number(ts) * 1000;
   if (isNaN(ms)) return ts;
   return new Date(ms).toISOString();
-}
-
-// Keep old export for backward compatibility until Task 9
-export async function collectLarkCalendarData(
-  _weekStart: string,
-  _weekEnd: string
-): Promise<LarkCalendarData> {
-  return { meetings: [], minutes: [], wikiDocs: [] };
 }

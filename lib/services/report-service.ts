@@ -1,5 +1,7 @@
 import { collectGitHubData } from '@/lib/collectors/github';
-import { collectLarkCalendarData } from '@/lib/collectors/lark-calendar';
+import { collectLarkCalendarEvents } from '@/lib/collectors/lark-calendar';
+import { collectLarkMinutes } from '@/lib/collectors/lark-minutes';
+import { collectLarkWikiDocs } from '@/lib/collectors/lark-wiki';
 import { getWeekRange } from '@/lib/date-utils';
 import { generateMarkdown } from '@/lib/generators/markdown';
 import { saveToFile } from '@/lib/publishers/file-saver';
@@ -8,14 +10,22 @@ import type { WeeklyReport, WeeklyReportData } from '@/lib/types';
 
 export async function generateWeeklyReport(
   token: string,
-  username: string
+  username: string,
+  larkToken?: string | null
 ): Promise<WeeklyReport> {
   const { weekStart, weekEnd } = getWeekRange();
 
-  // Collect data in parallel — individual failures don't block the pipeline
-  const [github, calendar] = await Promise.allSettled([
+  const [github, meetings, minutes, wikiDocs] = await Promise.allSettled([
     collectGitHubData(weekStart, weekEnd, token, username),
-    collectLarkCalendarData(weekStart, weekEnd),
+    larkToken
+      ? collectLarkCalendarEvents(weekStart, weekEnd, larkToken)
+      : Promise.resolve([]),
+    larkToken
+      ? collectLarkMinutes(weekStart, weekEnd, larkToken)
+      : Promise.resolve([]),
+    larkToken
+      ? collectLarkWikiDocs(weekStart, weekEnd, larkToken)
+      : Promise.resolve([]),
   ]);
 
   const data: WeeklyReportData = {
@@ -25,10 +35,11 @@ export async function generateWeeklyReport(
       github.status === 'fulfilled'
         ? github.value
         : { commits: [], pullRequests: [], issues: [] },
-    calendar:
-      calendar.status === 'fulfilled'
-        ? calendar.value
-        : { meetings: [], minutes: [], wikiDocs: [] },
+    calendar: {
+      meetings: meetings.status === 'fulfilled' ? meetings.value : [],
+      minutes: minutes.status === 'fulfilled' ? minutes.value : [],
+      wikiDocs: wikiDocs.status === 'fulfilled' ? wikiDocs.value : [],
+    },
   };
 
   // Summarize with ZHIPU AI
