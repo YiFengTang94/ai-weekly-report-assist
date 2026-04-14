@@ -8,18 +8,23 @@ export default async function ReportsPage() {
   const reports = await listReports();
 
   return (
-    <main className="container mx-auto p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">历史周报</h1>
-        <Link href="/" className="text-blue-600 hover:underline">
-          ← 返回首页
+    <main className="workbench-shell">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">ARCHIVE.NODE</p>
+          <h1 className="cyber-glitch" data-text="历史周报">
+            历史周报
+          </h1>
+        </div>
+        <Link href="/" className="text-link">
+          返回首页
         </Link>
       </div>
 
       {reports.length === 0 ? (
-        <p className="text-gray-500">暂无周报记录，请先生成周报</p>
+        <p className="empty-state">暂无周报记录，请先生成周报。</p>
       ) : (
-        <div className="space-y-4">
+        <div className="report-list">
           {reports.map((report) => (
             <Link key={report.id} href={`/reports/${report.id}`}>
               <ReportCard report={report} />
