@@ -1,35 +1,59 @@
-export function getWeekRange(): { weekStart: string; weekEnd: string } {
-  const now = new Date();
-  const day = now.getDay();
-  // Calculate Sunday: if Sunday (0), use today; otherwise go back to Sunday
-  const diffToSunday = day === 0 ? 0 : day;
-  const sunday = new Date(now);
-  sunday.setDate(now.getDate() - diffToSunday);
-  sunday.setHours(0, 0, 0, 0);
+const CHINA_TIME_OFFSET_MS = 8 * 60 * 60 * 1000;
 
-  // For GitHub API queries, extend the range to include partial days due to timezone differences
-  // Add 1 day before Sunday to catch commits from UTC perspective
-  const weekStartForAPI = new Date(sunday);
-  weekStartForAPI.setDate(sunday.getDate() - 1);
+export interface WeekRange {
+  weekStart: string;
+  weekEnd: string;
+  weekStartUtc: string;
+  weekEndUtc: string;
+}
 
-  // Saturday of the same week
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
-  saturday.setHours(23, 59, 59, 999);
+export function getWeekRange(now = new Date()): WeekRange {
+  const chinaNow = toChinaTime(now);
+  const day = chinaNow.getUTCDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  const monday = new Date(chinaNow);
+  monday.setUTCDate(chinaNow.getUTCDate() - diffToMonday);
+  monday.setUTCHours(0, 0, 0, 0);
 
-  // Add 1 day after Saturday
-  const weekEndForAPI = new Date(saturday);
-  weekEndForAPI.setDate(saturday.getDate() + 1);
+  const friday = new Date(monday);
+  friday.setUTCDate(monday.getUTCDate() + 4);
+  friday.setUTCHours(23, 59, 59, 999);
 
   return {
-    weekStart: formatDate(weekStartForAPI),
-    weekEnd: formatDate(weekEndForAPI),
+    weekStart: formatChinaDate(monday),
+    weekEnd: formatChinaDate(friday),
+    weekStartUtc: formatUtcSecond(fromChinaTime(monday)),
+    weekEndUtc: formatUtcSecond(fromChinaTime(friday)),
   };
 }
 
-function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+export function isInChinaTimeRange(
+  isoTimestamp: string,
+  range: Pick<WeekRange, 'weekStartUtc' | 'weekEndUtc'>
+): boolean {
+  const timestamp = new Date(isoTimestamp).getTime();
+  return (
+    Number.isFinite(timestamp) &&
+    timestamp >= new Date(range.weekStartUtc).getTime() &&
+    timestamp <= new Date(range.weekEndUtc).getTime()
+  );
+}
+
+function toChinaTime(date: Date): Date {
+  return new Date(date.getTime() + CHINA_TIME_OFFSET_MS);
+}
+
+function fromChinaTime(date: Date): Date {
+  return new Date(date.getTime() - CHINA_TIME_OFFSET_MS);
+}
+
+function formatChinaDate(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function formatUtcSecond(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }

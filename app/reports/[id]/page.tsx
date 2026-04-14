@@ -13,18 +13,18 @@ export default async function ReportDetailPage({
   const report = await getReportById(id);
 
   return (
-    <main className="container mx-auto p-8">
+    <main className="workbench-shell">
       <Link
         href="/reports"
-        className="text-blue-600 hover:underline mb-4 inline-block"
+        className="text-link"
       >
-        ← 返回列表
+        返回列表
       </Link>
 
       {report ? (
         <ReportDetail report={report} />
       ) : (
-        <p className="text-gray-500">周报 {id} 不存在</p>
+        <p className="empty-state">周报 {id} 不存在</p>
       )}
     </main>
   );

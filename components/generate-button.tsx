@@ -21,15 +21,15 @@ export function GenerateButton() {
   }
 
   return (
-    <div>
+    <div className="generate-control">
       <button
         onClick={handleGenerate}
         disabled={loading}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        className="primary-action"
       >
-        {loading ? '生成中...' : '生成本周周报'}
+        {loading ? '正在生成' : '生成本周周报'}
       </button>
-      {message && <p className="mt-2 text-sm text-gray-600">{message}</p>}
+      {message && <p className="status-note">{message}</p>}
     </div>
   );
 }
