@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const report = await generateWeeklyReport(token, username);
+    const larkToken = process.env.LARK_USER_ACCESS_TOKEN || null;
+    const report = await generateWeeklyReport(token, username, larkToken);
     return NextResponse.json({ report });
   } catch (error) {
     const message =

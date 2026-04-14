@@ -7,7 +7,9 @@ const SYSTEM_PROMPT = `你是一个专业的工作周报撰写助手。请根据
 1. 语言简洁专业，避免口语化
 2. 将零散的 commit 信息归纳成有意义的工作项描述，而非简单罗列
 3. 相关的 commit 和 PR 应合并归纳为同一工作项
-4. 严格按照以下 Markdown 结构输出：
+4. 综合日历事件、会议纪要和会议总结，归纳本周的沟通协作情况。如有待办事项，单独列出
+5. 如有本周编辑的文档，在相关工作项中引用，体现文档产出
+6. 严格按照以下 Markdown 结构输出：
 
 ## 本周完成
 （归纳已 merge 的 PR、已关闭的 Issue、关键 commit）
@@ -16,7 +18,7 @@ const SYSTEM_PROMPT = `你是一个专业的工作周报撰写助手。请根据
 （归纳仍 open 的 PR 和 Issue）
 
 ## 会议与协作
-（本周会议概要，如无会议数据则写"本周无会议记录"）
+（本周会议概要、纪要摘要及待办事项，如无会议数据则写"本周无会议记录"）
 
 ## 下周计划
 （基于进行中的工作，推断下周重点方向）`;
@@ -112,6 +114,35 @@ function buildPrompt(data: WeeklyReportData): string {
   } else {
     for (const m of data.calendar.meetings) {
       lines.push(`- ${m.title} (${m.startTime} ~ ${m.endTime})`);
+    }
+  }
+
+  // === 新增：会议纪要 ===
+  lines.push('');
+  lines.push(`=== 会议纪要 (${data.calendar.minutes.length}) ===`);
+  if (data.calendar.minutes.length === 0) {
+    lines.push('（无会议纪要）');
+  } else {
+    for (const m of data.calendar.minutes) {
+      lines.push(`- ${m.meetingTitle}`);
+      if (m.summary) lines.push(`  总结: ${m.summary}`);
+      if (m.todos?.length) {
+        lines.push(`  待办: ${m.todos.join('；')}`);
+      }
+    }
+  }
+
+  // === 新增：本周文档 ===
+  lines.push('');
+  lines.push(`=== 本周文档 (${data.calendar.wikiDocs.length}) ===`);
+  if (data.calendar.wikiDocs.length === 0) {
+    lines.push('（无文档更新）');
+  } else {
+    for (const doc of data.calendar.wikiDocs) {
+      lines.push(`- ${doc.title} (更新于 ${doc.updatedAt})`);
+      if (doc.content) {
+        lines.push(`  内容摘要: ${doc.content}`);
+      }
     }
   }
 

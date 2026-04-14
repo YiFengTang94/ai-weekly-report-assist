@@ -150,9 +150,13 @@ vercel
 | `AUTH_SECRET` | NextAuth 密钥 | ✅ |
 | `AUTH_GITHUB_ID` | GitHub OAuth App ID | ✅ |
 | `AUTH_GITHUB_SECRET` | GitHub OAuth App Secret | ✅ |
+| `LARK_APP_ID` | 飞书自建应用 App ID（OAuth 登录） | ✅（使用飞书采集时） |
+| `LARK_APP_SECRET` | 飞书自建应用 App Secret（OAuth 登录） | ✅（使用飞书采集时） |
 | `ZHIPU_API_KEY` | 智谱 AI API Key | ✅ |
 | `GITHUB_TOKEN` | GitHub PAT（Cron 使用） | ❌ |
 | `GITHUB_USERNAME` | GitHub 用户名（Cron 使用） | ❌ |
+| `LARK_WIKI_SPACE_ID` | 飞书知识库 Space ID（Wiki 采集） | ❌ |
+| `LARK_USER_ACCESS_TOKEN` | 飞书用户访问令牌（Cron 无会话时兜底） | ❌ |
 | `CRON_SECRET` | Cron 访问密钥 | ❌ |
 | `REPORT_OUTPUT_DIR` | 周报保存目录 | 默认: `./reports` |
 

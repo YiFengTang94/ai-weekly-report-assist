@@ -7,7 +7,7 @@ export const config = {
     appId: process.env.LARK_APP_ID ?? '',
     appSecret: process.env.LARK_APP_SECRET ?? '',
     botWebhook: process.env.LARK_BOT_WEBHOOK ?? '',
-    userId: process.env.LARK_USER_ID ?? '',
+    wikiSpaceId: process.env.LARK_WIKI_SPACE_ID ?? '',
   },
   zhipu: {
     apiKey: process.env.ZHIPU_API_KEY ?? '',

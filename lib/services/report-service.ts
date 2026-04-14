@@ -1,5 +1,7 @@
 import { collectGitHubData } from '@/lib/collectors/github';
-import { collectLarkCalendarData } from '@/lib/collectors/lark-calendar';
+import { collectLarkCalendarEvents } from '@/lib/collectors/lark-calendar';
+import { collectLarkMinutes } from '@/lib/collectors/lark-minutes';
+import { collectLarkWikiDocs } from '@/lib/collectors/lark-wiki';
 import { getWeekRange } from '@/lib/date-utils';
 import { generateMarkdown } from '@/lib/generators/markdown';
 import { saveToFile } from '@/lib/publishers/file-saver';
@@ -8,14 +10,26 @@ import type { WeeklyReport, WeeklyReportData } from '@/lib/types';
 
 export async function generateWeeklyReport(
   token: string,
-  username: string
+  username: string,
+  larkToken?: string | null
 ): Promise<WeeklyReport> {
   const weekRange = getWeekRange();
 
-  // Collect data in parallel — individual failures don't block the pipeline
-  const [github, calendar] = await Promise.allSettled([
+  const [github, meetings, minutes, wikiDocs] = await Promise.allSettled([
     collectGitHubData(weekRange, token, username),
-    collectLarkCalendarData(weekRange.weekStart, weekRange.weekEnd),
+    larkToken
+      ? collectLarkCalendarEvents(
+          weekRange.weekStart,
+          weekRange.weekEnd,
+          larkToken
+        )
+      : Promise.resolve([]),
+    larkToken
+      ? collectLarkMinutes(weekRange.weekStart, weekRange.weekEnd, larkToken)
+      : Promise.resolve([]),
+    larkToken
+      ? collectLarkWikiDocs(weekRange.weekStart, weekRange.weekEnd, larkToken)
+      : Promise.resolve([]),
   ]);
 
   const data: WeeklyReportData = {
@@ -25,10 +39,11 @@ export async function generateWeeklyReport(
       github.status === 'fulfilled'
         ? github.value
         : { commits: [], pullRequests: [], issues: [] },
-    calendar:
-      calendar.status === 'fulfilled'
-        ? calendar.value
-        : { meetings: [] },
+    calendar: {
+      meetings: meetings.status === 'fulfilled' ? meetings.value : [],
+      minutes: minutes.status === 'fulfilled' ? minutes.value : [],
+      wikiDocs: wikiDocs.status === 'fulfilled' ? wikiDocs.value : [],
+    },
   };
 
   // Summarize with ZHIPU AI
