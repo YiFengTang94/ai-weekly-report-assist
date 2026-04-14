@@ -13,24 +13,28 @@ export async function generateWeeklyReport(
   username: string,
   larkToken?: string | null
 ): Promise<WeeklyReport> {
-  const { weekStart, weekEnd } = getWeekRange();
+  const weekRange = getWeekRange();
 
   const [github, meetings, minutes, wikiDocs] = await Promise.allSettled([
-    collectGitHubData(weekStart, weekEnd, token, username),
+    collectGitHubData(weekRange, token, username),
     larkToken
-      ? collectLarkCalendarEvents(weekStart, weekEnd, larkToken)
+      ? collectLarkCalendarEvents(
+          weekRange.weekStart,
+          weekRange.weekEnd,
+          larkToken
+        )
       : Promise.resolve([]),
     larkToken
-      ? collectLarkMinutes(weekStart, weekEnd, larkToken)
+      ? collectLarkMinutes(weekRange.weekStart, weekRange.weekEnd, larkToken)
       : Promise.resolve([]),
     larkToken
-      ? collectLarkWikiDocs(weekStart, weekEnd, larkToken)
+      ? collectLarkWikiDocs(weekRange.weekStart, weekRange.weekEnd, larkToken)
       : Promise.resolve([]),
   ]);
 
   const data: WeeklyReportData = {
-    weekStart,
-    weekEnd,
+    weekStart: weekRange.weekStart,
+    weekEnd: weekRange.weekEnd,
     github:
       github.status === 'fulfilled'
         ? github.value

@@ -1,4 +1,5 @@
 import { Octokit } from '@octokit/rest';
+import { isInChinaTimeRange, type WeekRange } from '@/lib/date-utils';
 import type { GitHubCommit, GitHubData, GitHubIssue, GitHubPR } from '@/lib/types';
 
 type SearchIssueItem = Awaited<
@@ -7,8 +8,7 @@ type SearchIssueItem = Awaited<
 type PRStatus = GitHubPR['status'];
 
 export async function collectGitHubData(
-  weekStart: string,
-  weekEnd: string,
+  weekRange: WeekRange,
   token: string,
   username: string
 ): Promise<GitHubData> {
@@ -22,9 +22,9 @@ export async function collectGitHubData(
   }
 
   const [commits, pullRequests, issues] = await Promise.allSettled([
-    fetchCommits(octokit, login, weekStart, weekEnd),
-    fetchPRs(octokit, login, weekStart, weekEnd),
-    fetchIssues(octokit, login, weekStart, weekEnd),
+    fetchCommits(octokit, login, weekRange),
+    fetchPRs(octokit, login, weekRange),
+    fetchIssues(octokit, login, weekRange),
   ]);
 
   return {
@@ -37,10 +37,9 @@ export async function collectGitHubData(
 async function fetchCommits(
   octokit: Octokit,
   username: string,
-  weekStart: string,
-  weekEnd: string
+  weekRange: WeekRange
 ): Promise<GitHubCommit[]> {
-  const q = `author:${username} committer-date:${weekStart}..${weekEnd}`;
+  const q = `author:${username} committer-date:${weekRange.weekStartUtc}..${weekRange.weekEndUtc}`;
   const { data } = await octokit.rest.search.commits({
     q,
     sort: 'committer-date',
@@ -48,31 +47,32 @@ async function fetchCommits(
     per_page: 100,
   });
 
-  return data.items.map((item) => ({
-    sha: item.sha.slice(0, 7),
-    message: item.commit.message.split('\n')[0],
-    repo: item.repository?.full_name ?? '',
-    timestamp: item.commit.committer?.date ?? '',
-  }));
+  return data.items
+    .map((item) => ({
+      sha: item.sha.slice(0, 7),
+      message: item.commit.message.split('\n')[0],
+      repo: item.repository?.full_name ?? '',
+      timestamp: item.commit.committer?.date ?? '',
+    }))
+    .filter((commit) => isInChinaTimeRange(commit.timestamp, weekRange));
 }
 
 async function fetchPRs(
   octokit: Octokit,
   username: string,
-  weekStart: string,
-  weekEnd: string
+  weekRange: WeekRange
 ): Promise<GitHubPR[]> {
   const queries = [
     {
-      q: `author:${username} merged:${weekStart}..${weekEnd} type:pr`,
+      q: `author:${username} merged:${weekRange.weekStart}..${weekRange.weekEnd} type:pr`,
       status: 'merged' as const,
     },
     {
-      q: `author:${username} closed:${weekStart}..${weekEnd} type:pr`,
+      q: `author:${username} closed:${weekRange.weekStart}..${weekRange.weekEnd} type:pr`,
       status: 'closed' as const,
     },
     {
-      q: `author:${username} updated:${weekStart}..${weekEnd} state:open type:pr`,
+      q: `author:${username} updated:${weekRange.weekStart}..${weekRange.weekEnd} state:open type:pr`,
     },
   ];
 
@@ -88,12 +88,11 @@ async function fetchPRs(
 async function fetchIssues(
   octokit: Octokit,
   username: string,
-  weekStart: string,
-  weekEnd: string
+  weekRange: WeekRange
 ): Promise<GitHubIssue[]> {
   const queries = [
-    `author:${username} closed:${weekStart}..${weekEnd} type:issue`,
-    `author:${username} updated:${weekStart}..${weekEnd} state:open type:issue`,
+    `author:${username} closed:${weekRange.weekStart}..${weekRange.weekEnd} type:issue`,
+    `author:${username} updated:${weekRange.weekStart}..${weekRange.weekEnd} state:open type:issue`,
   ];
 
   const results = await Promise.all(queries.map((q) => searchIssues(octokit, q)));
