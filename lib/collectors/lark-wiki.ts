@@ -32,6 +32,7 @@ export async function collectLarkWikiDocs(
   const weekStartMs = new Date(`${weekStart}T00:00:00+08:00`).getTime();
   const weekEndMs = new Date(`${weekEnd}T23:59:59+08:00`).getTime();
 
+  // TODO: 目前仅获取顶层节点，后续可递归遍历子节点
   const nodes = await larkFetchAll<WikiNode>(
     `/wiki/v2/spaces/${spaceId}/nodes`,
     accessToken,
@@ -88,6 +89,7 @@ async function fetchWikiDocContent(
       updatedAt: node.obj_edit_time
         ? new Date(Number(node.obj_edit_time) * 1000).toISOString()
         : '',
+      url: `https://feishu.cn/wiki/${node.node_token}`,
     };
   } catch {
     return null;

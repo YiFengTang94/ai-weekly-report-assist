@@ -11,6 +11,13 @@ declare module 'next-auth' {
   }
 }
 
+// NextAuth 5 beta JWT 类型扩展
+interface LarkJWT {
+  accessToken?: string;
+  larkAccessToken?: string;
+  larkRefreshToken?: string;
+  larkExpiresAt?: number;
+}
 
 const LARK_SCOPES = [
   'calendar:calendar:read',
@@ -110,30 +117,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account }) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const t = token as any;
+      const t = token as unknown as LarkJWT;
       if (account?.provider === 'github') {
-        t.accessToken = account.access_token;
+        t.accessToken = account.access_token ?? undefined;
       }
       if (account?.provider === 'lark') {
-        t.larkAccessToken = account.access_token;
-        t.larkRefreshToken = account.refresh_token;
-        t.larkExpiresAt = Date.now() + ((account.expires_in as number) ?? 7200) * 1000;
+        t.larkAccessToken = account.access_token ?? undefined;
+        t.larkRefreshToken = account.refresh_token ?? undefined;
+        const expiresIn = (account.expires_in as number | undefined) ?? 7200;
+        t.larkExpiresAt = Date.now() + expiresIn * 1000;
       }
       // 自动刷新飞书 token
       if (
         t.larkRefreshToken &&
         t.larkExpiresAt &&
-        Date.now() > (t.larkExpiresAt as number) - 300_000
+        Date.now() > t.larkExpiresAt - 300_000
       ) {
         try {
-          const refreshed = await refreshUserAccessToken(
-            t.larkRefreshToken as string
-          );
+          const refreshed = await refreshUserAccessToken(t.larkRefreshToken);
           t.larkAccessToken = refreshed.access_token;
           t.larkRefreshToken = refreshed.refresh_token;
           t.larkExpiresAt = Date.now() + refreshed.expires_in * 1000;
         } catch {
+          console.warn('飞书 token 刷新失败，用户需要重新授权');
           t.larkAccessToken = undefined;
           t.larkRefreshToken = undefined;
           t.larkExpiresAt = undefined;
@@ -142,8 +148,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const t = token as any;
+      const t = token as unknown as LarkJWT;
       session.accessToken = t.accessToken as string;
       session.larkAccessToken = t.larkAccessToken as string;
       return session;
