@@ -29,7 +29,6 @@ interface ConnectedIdentity {
   image?: string | null;
 }
 
-// NextAuth 5 beta JWT 类型扩展
 interface AppJWT extends JWT {
   accessToken?: string;
   picture?: string | null;
@@ -53,14 +52,6 @@ type AvatarProfile = {
   avatar_url?: string | null;
 };
 
-function asGitHubProfile(profile: unknown): GitHubProfile {
-  return profile as GitHubProfile;
-}
-
-function asAvatarProfile(profile: unknown): AvatarProfile {
-  return profile as AvatarProfile;
-}
-
 const AUTH_SESSION_COOKIE_NAMES = [
   'authjs.session-token',
   '__Secure-authjs.session-token',
@@ -75,11 +66,11 @@ async function readExistingAuthToken(): Promise<AppJWT | null> {
   }
 
   const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
   for (const name of AUTH_SESSION_COOKIE_NAMES) {
     const value =
       cookieStore.get(name)?.value ??
-      cookieStore
-        .getAll()
+      allCookies
         .filter((cookie) => cookie.name.startsWith(`${name}.`))
         .sort((a, b) => {
           const aIndex = Number(a.name.slice(name.length + 1));
@@ -205,13 +196,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     GitHub({
       authorization: { params: { scope: 'repo read:user' } },
       profile(profile) {
-        const githubProfile = asGitHubProfile(profile);
-
+        const p = profile as GitHubProfile;
         return {
-          id: githubProfile.id.toString(),
-          name: githubProfile.name || githubProfile.login,
-          email: githubProfile.email,
-          image: githubProfile.avatar_url,
+          id: p.id.toString(),
+          name: p.name || p.login,
+          email: p.email,
+          image: p.avatar_url,
         };
       },
     }),
@@ -227,16 +217,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (account?.provider === 'github') {
         t.accessToken = account.access_token ?? undefined;
-        const githubProfile = asGitHubProfile(profile);
+        const gp = profile as GitHubProfile;
         t.githubUser = {
-          name: githubProfile.name || githubProfile.login || user?.name,
-          email: githubProfile.email ?? user?.email,
-          image: githubProfile.avatar_url ?? user?.image,
+          name: gp.name || gp.login || user?.name,
+          email: gp.email ?? user?.email,
+          image: gp.avatar_url ?? user?.image,
         };
       }
       if (profile) {
-        const avatarProfile = asAvatarProfile(profile);
-        t.picture = avatarProfile.avatar_url ?? t.picture;
+        t.picture = (profile as AvatarProfile).avatar_url ?? t.picture;
       }
       if (account?.provider === 'lark') {
         t.larkAccessToken = account.access_token ?? undefined;
@@ -250,7 +239,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           : Date.now() + expiresIn * 1000;
         t.larkExpiresAt = expiresAt;
       }
-      // 自动刷新飞书 token
       if (
         t.larkRefreshToken &&
         t.larkExpiresAt &&

@@ -19,6 +19,12 @@ function isLarkAuthExpired(status: number, body: string): boolean {
   return status === 401 || body.includes('99991677');
 }
 
+function buildLarkUrl(path: string, params?: Record<string, string>): string {
+  const url = `${LARK_BASE}${path}`;
+  if (!params) return url;
+  return `${url}?${new URLSearchParams(params).toString()}`;
+}
+
 export async function larkFetch<T = unknown>(
   path: string,
   accessToken: string,
@@ -30,13 +36,7 @@ export async function larkFetch<T = unknown>(
 ): Promise<T> {
   const { method = 'GET', params, body } = options;
 
-  let url = `${LARK_BASE}${path}`;
-  if (params) {
-    const search = new URLSearchParams(params);
-    url += `?${search.toString()}`;
-  }
-
-  const res = await fetch(url, {
+  const res = await fetch(buildLarkUrl(path, params), {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export async function larkFetch<T = unknown>(
   }
 
   const json: LarkResponse<T> = await res.json();
-  if (isLarkAuthExpired(res.status, JSON.stringify(json))) {
+  if (json.code === 99991677) {
     throw new LarkAuthExpiredError();
   }
   if (json.code !== 0) {
@@ -69,13 +69,7 @@ export async function larkFetchText(
   accessToken: string,
   params?: Record<string, string>
 ): Promise<string> {
-  let url = `${LARK_BASE}${path}`;
-  if (params) {
-    const search = new URLSearchParams(params);
-    url += `?${search.toString()}`;
-  }
-
-  const res = await fetch(url, {
+  const res = await fetch(buildLarkUrl(path, params), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
