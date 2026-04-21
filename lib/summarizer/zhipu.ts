@@ -59,7 +59,6 @@ export async function summarizeWithZhipu(
 
   const json = await response.json();
   const choice = json.choices?.[0]?.message;
-  // Handle both standard and reasoning model response formats
   const content = choice?.content || choice?.reasoning_content || '';
   if (!content) {
     throw new Error('智谱 API 返回了空内容');
@@ -133,7 +132,6 @@ function buildPrompt(data: WeeklyReportData): string {
     }
   }
 
-  // === 新增：会议纪要 ===
   lines.push('');
   lines.push(`=== 会议纪要 (${data.calendar.minutes.length}) ===`);
   if (data.calendar.minutes.length === 0) {
@@ -148,7 +146,6 @@ function buildPrompt(data: WeeklyReportData): string {
     }
   }
 
-  // === 新增：本周文档 ===
   lines.push('');
   lines.push(`=== 本周文档 (${data.calendar.wikiDocs.length}) ===`);
   if (data.calendar.wikiDocs.length === 0) {
