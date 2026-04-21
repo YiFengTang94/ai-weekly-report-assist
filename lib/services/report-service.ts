@@ -124,9 +124,10 @@ export async function generateWeeklyReport(
   token: string,
   username: string,
   larkToken?: string | null,
-  initialWarnings: ReportWarning[] = []
+  initialWarnings: ReportWarning[] = [],
+  targetDate?: Date
 ): Promise<WeeklyReport> {
-  const weekRange = getWeekRange();
+  const weekRange = getWeekRange(targetDate);
   const warnings = [...initialWarnings];
 
   const [github, meetings, minutes, wikiDocs] = await Promise.allSettled([
@@ -169,13 +170,8 @@ export async function generateWeeklyReport(
     ],
   };
 
-  // Summarize with ZHIPU AI
   const summary = await summarizeWithZhipu(data);
-
-  // Generate markdown report
   const report = generateMarkdown(data, summary);
-
-  // Save to filesystem
   report.filePath = await saveToFile(report);
 
   return report;
