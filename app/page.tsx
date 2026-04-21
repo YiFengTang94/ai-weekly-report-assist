@@ -1,4 +1,5 @@
 import { GenerateButton } from '@/components/generate-button';
+import { HistoryGenerateSection } from '@/components/history-generate-section';
 import { AuthButton } from '@/components/auth-button';
 import Link from 'next/link';
 
@@ -25,6 +26,15 @@ export default function DashboardPage() {
             统计窗口固定为北京时间周一 00:00 到周五 23:59，减少跨时区遗漏
           </p>
           <GenerateButton />
+        </div>
+
+        <div className="command-panel">
+          <p className="eyebrow">Backfill / History</p>
+          <h2 className="cyber-glitch" data-text="回溯生成历史周报">
+            回溯生成历史周报
+          </h2>
+          <p>选择过去任意一周，重新采集并生成对应周报</p>
+          <HistoryGenerateSection />
         </div>
 
         <aside className="signal-board" aria-label="采集范围">

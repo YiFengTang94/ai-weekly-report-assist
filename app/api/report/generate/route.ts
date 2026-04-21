@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { resolveGitHubToken } from '@/lib/github-token';
 import { resolveLarkTokenState } from '@/lib/lark-token';
+import { parseMondayDate } from '@/lib/date-utils';
 import { generateWeeklyReport } from '@/lib/services/report-service';
 import type { ReportWarning } from '@/lib/types';
 
@@ -41,8 +42,26 @@ function getLarkWarnings(reason: string | undefined): ReportWarning[] {
   return [];
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    let targetDate: Date | undefined;
+    let body: { weekStart?: string } | null = null;
+    try {
+      body = await request.json();
+    } catch {
+      // no body — current week
+    }
+    if (body?.weekStart) {
+      try {
+        targetDate = parseMondayDate(body.weekStart);
+      } catch (e) {
+        return NextResponse.json(
+          { message: e instanceof Error ? e.message : '日期参数无效' },
+          { status: 400 }
+        );
+      }
+    }
+
     const { token, username } = await resolveGitHubToken();
     const larkTokenState = await resolveLarkTokenState();
     const larkWarnings = getLarkWarnings(larkTokenState.reason);
@@ -50,7 +69,8 @@ export async function POST() {
       token,
       username,
       larkTokenState.token,
-      larkWarnings
+      larkWarnings,
+      targetDate
     );
     return NextResponse.json({
       report,

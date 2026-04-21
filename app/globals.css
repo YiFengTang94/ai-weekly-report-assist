@@ -382,6 +382,38 @@ a:focus-visible {
     gap: 16px;
   }
 
+  .history-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .week-select {
+    min-height: 48px;
+    padding: 0 12px;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-cyber-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    clip-path: var(--chamfer-sm);
+    cursor: pointer;
+    appearance: none;
+  }
+
+  .week-select:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+  }
+
+  .week-select option {
+    background: var(--background);
+    color: var(--accent);
+  }
+
   .auth-actions {
     display: flex;
     flex-wrap: wrap;

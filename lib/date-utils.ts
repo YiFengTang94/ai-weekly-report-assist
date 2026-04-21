@@ -27,6 +27,53 @@ export function getWeekRange(now = new Date()): WeekRange {
   };
 }
 
+export function parseMondayDate(weekStart: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(weekStart);
+  if (!match) {
+    throw new Error(`日期格式错误，应为 YYYY-MM-DD：${weekStart}`);
+  }
+
+  const date = new Date(`${weekStart}T00:00:00+08:00`);
+  if (isNaN(date.getTime())) {
+    throw new Error(`无效日期：${weekStart}`);
+  }
+
+  const chinaDate = toChinaTime(date);
+  const normalizedDate = formatChinaDate(chinaDate);
+  if (normalizedDate !== weekStart) {
+    throw new Error(`无效日期：${weekStart}`);
+  }
+
+  const chinaDayOfWeek = chinaDate.getUTCDay();
+  if (chinaDayOfWeek !== 1) {
+    throw new Error(`指定日期不是周一：${weekStart}`);
+  }
+  return date;
+}
+
+export function getPastMondays(count = 12): string[] {
+  const mondays: string[] = [];
+  const now = new Date();
+  const chinaNow = new Date(now.getTime() + CHINA_TIME_OFFSET_MS);
+  const day = chinaNow.getUTCDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  const thisMonday = new Date(chinaNow);
+  thisMonday.setUTCDate(chinaNow.getUTCDate() - diffToMonday);
+  thisMonday.setUTCHours(0, 0, 0, 0);
+
+  for (let i = 1; i <= count; i++) {
+    const monday = new Date(thisMonday);
+    monday.setUTCDate(thisMonday.getUTCDate() - i * 7);
+    mondays.push(formatChinaDate(monday));
+  }
+  return mondays;
+}
+
+export function formatWeekLabel(weekStart: string): string {
+  const range = getWeekRange(parseMondayDate(weekStart));
+  return `${range.weekStart} ~ ${range.weekEnd}`;
+}
+
 export function isInChinaTimeRange(
   isoTimestamp: string,
   range: Pick<WeekRange, 'weekStartUtc' | 'weekEndUtc'>
