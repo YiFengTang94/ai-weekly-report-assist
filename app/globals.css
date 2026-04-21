@@ -252,6 +252,27 @@ a:focus-visible {
     transform: skewY(0.6deg);
   }
 
+  .command-panel-hub {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 28px;
+  }
+
+  .command-panel-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 18px;
+    flex: 1 1 0;
+    max-width: 610px;
+  }
+
+  .command-panel-actions {
+    margin-top: 112px;
+    align-self: flex-start;
+  }
+
   .command-panel::before {
     content: "> uplink_ready";
     position: absolute;
@@ -288,6 +309,41 @@ a:focus-visible {
     animation: blink 1s step-end infinite;
   }
 
+  .command-panel-copy {
+    max-width: 620px;
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.85;
+  }
+
+  .command-panel-copy::after {
+    content: "_";
+    color: var(--accent);
+    animation: blink 1s step-end infinite;
+  }
+
+  .command-panel-history-title {
+    display: block;
+    width: auto;
+    max-width: 330px;
+    font-size: 1.18rem;
+    line-height: 0.88;
+    letter-spacing: -0.01em;
+    font-weight: 900;
+    white-space: nowrap;
+    text-shadow: -1px 0 var(--accent-secondary), 1px 0 var(--accent-tertiary), 0 0 7px rgb(0 255 136 / 18%);
+    filter: drop-shadow(0 0 7px rgb(0 255 136 / 12%));
+    transform: scaleX(0.92);
+    transform-origin: left center;
+  }
+
+  .command-panel-history > p:not(.eyebrow) {
+    max-width: 330px;
+  }
+
   .signal-board {
     display: grid;
     align-content: stretch;
@@ -297,6 +353,46 @@ a:focus-visible {
       var(--background);
     box-shadow: var(--shadow-neon-tertiary);
     transform: skewY(0.6deg);
+  }
+
+  .signal-board-embedded {
+    flex: 0 0 360px;
+    min-height: 100%;
+    display: grid;
+    gap: 0;
+    align-content: stretch;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+    clip-path: none;
+    border: 0;
+    transform: none;
+  }
+
+  .signal-board-embedded::after {
+    display: none;
+  }
+
+  .signal-board-card {
+    position: relative;
+    min-height: 168px;
+    padding: 26px 8px 28px 46px;
+    background: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid rgb(76 90 140 / 34%);
+  }
+
+  .signal-board-card:last-child {
+    border-bottom: 0;
+  }
+
+  .signal-board-card::before {
+    content: ">";
+    position: absolute;
+    top: 20px;
+    left: 16px;
+    color: var(--accent);
+    text-shadow: var(--shadow-neon-sm);
   }
 
   .signal-board div {
@@ -800,6 +896,21 @@ a:focus-visible {
     .command-panel h2 {
       font-size: 3.35rem;
     }
+
+    .command-panel-history-title {
+      max-width: none;
+      font-size: 1.52rem;
+      line-height: 0.9;
+      white-space: nowrap;
+    }
+
+    .command-panel-hub {
+      flex-direction: column;
+    }
+
+    .signal-board-embedded {
+      flex-basis: auto;
+    }
   }
 
   @media (max-width: 620px) {
@@ -831,6 +942,21 @@ a:focus-visible {
     .command-panel h2 {
       font-size: 2.55rem;
       letter-spacing: 0.04em;
+    }
+
+    .command-panel-history-title {
+      max-width: 100%;
+      font-size: 1.48rem;
+      line-height: 0.98;
+      white-space: normal;
+    }
+
+    .signal-board-card {
+      min-height: 144px;
+      padding-top: 24px;
+      padding-right: 18px;
+      padding-left: 18px;
+      padding-bottom: 24px;
     }
 
     .auth-chip {
