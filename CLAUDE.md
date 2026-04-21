@@ -13,4 +13,6 @@ AI 周报助手是一个面向个人工程师的 Web 应用，基于 Next.js 构
 - Error handling: always use try-catch in API routes
 # Testing
 - Run `npm run lint` before committing
+- Use Conventional Commit messages for every commit
+- For any change in this project, whether functional or visual, perform real browser verification with screenshots before considering the work complete
 - Test API routes with curl before building UI
